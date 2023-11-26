@@ -1,38 +1,43 @@
 import React from 'react';
 import * as yup from 'yup';
-import styled from '@emotion/styled';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
-import { FromButton } from './ContactForm.styled';
-import { formatPhoneNumber } from 'components/helpers/formatPhoneNumber';
+import { Formik, ErrorMessage } from 'formik';
+import { FromButton, FromPhonebook, Input } from './ContactForm.styled';
 
 const initialValues = {
   name: '',
   number: '',
 };
 
-const FromPhonebook = styled(Form)`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-left: 20px;
-`;
+// let Schema = yup.object().shape({
+//   name: yup.string().required(),
+//   number: yup.string().required().min(7).max(10),
+// });
 
-const Input = styled(Field)`
-  display: block;
-  border: 1px solid #ccc;
-  padding: 8px;
-  font-size: 16px;
-`;
-
-let schema = yup.object().shape({
-  name: yup.string().required(),
-  number: yup.string().required().min(7).max(10),
+const Schema = yup.object().shape({
+  name: yup
+    .string()
+    .required()
+    .trim()
+    .matches(
+      /^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$/,
+      'Please check that the name you have dialed is correct'
+    ),
+  number: yup
+    .string()
+    .required()
+    .trim()
+    .test('noLettersInside', 'Number cannot contain letters', value => {
+      return !/[a-zA-Zа-яА-Я]/.test(value);
+    })
+    .matches(
+      /\+?\d{1,4}?[ .\-\s]?\(?\d{1,3}?\)?[ .\-\s]?\d{1,4}[ .\-\s]?\d{1,4}[ .\-\s]?\d{1,9}/,
+      'Please check that the number you have dialed is correct'
+    ),
 });
 
 export const ContactForm = ({ onSubmit }) => {
   const handleSubmit = (values, { resetForm }) => {
-    const fromattedNumber = formatPhoneNumber(values.number);
-    onSubmit(values.name, fromattedNumber);
+    onSubmit(values.name, values.number);
     resetForm();
   };
 
@@ -40,7 +45,7 @@ export const ContactForm = ({ onSubmit }) => {
     <Formik
       initialValues={initialValues}
       onSubmit={handleSubmit}
-      validationSchema={schema}
+      validationSchema={Schema}
     >
       <FromPhonebook>
         <label>
